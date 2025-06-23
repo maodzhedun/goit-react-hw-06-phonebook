@@ -1,24 +1,17 @@
-import { useState, useEffect } from 'react';
-import { nanoid } from 'nanoid';
+import { useSelector, useDispatch } from 'react-redux';
+import { addContact, deleteContact, setFilter } from '../../redux/contactsSlice';
 import { ContainerApp } from './App.styled';
 import Filter from 'components/Filter/Filter';
 import ContactList from 'components/ContactList/ContactList';
 import ContactForm from 'components/ContactForm/ContactForm';
-
-const LS_KEY = 'contact';
+import { nanoid } from 'nanoid';
 
 const App = () => {
-  const [contacts, setContacts] = useState(() => {
-    const savedContacts = localStorage.getItem(LS_KEY);
-    return savedContacts ? JSON.parse(savedContacts) : [];
-  });
-  const [filter, setFilter] = useState('');
+  const contacts = useSelector(state => state.contacts.contacts);
+  const filter = useSelector(state => state.contacts.filter);
+  const dispatch = useDispatch();
 
-  useEffect(() => {
-    localStorage.setItem(LS_KEY, JSON.stringify(contacts));
-  }, [contacts]);
-
-  const AddContact = (name, number) => {
+  const handleAddContact = (name, number) => {
     if (contacts.find(contact => contact.name === name)) {
       return alert(`${name} is already in contacts.`);
     }
@@ -27,12 +20,11 @@ const App = () => {
       name,
       number,
     };
-
-    setContacts(prevContact => [...prevContact, newContact]);
+    dispatch(addContact(newContact));
   };
 
   const handleFilter = event => {
-    setFilter(event.target.value);
+    dispatch(setFilter(event.target.value));
   };
 
   const getVisibleContacts = () => {
@@ -44,23 +36,23 @@ const App = () => {
 
   const visibleContacts = getVisibleContacts();
 
-  const deleteContact = id => {
-    setContacts(prevContacts =>
-      prevContacts.filter(contact => contact.id !== id)
-    );
+  const handleDeleteContact = id => {
+    dispatch(deleteContact(id));
   };
 
   return (
     <ContainerApp>
       <div>
         <h1>Phonebook</h1>
-        <ContactForm AddContact={AddContact} id={contacts.id} />
+        <ContactForm AddContact={handleAddContact} />
       </div>
       <div>
         <h2>Contacts</h2>
-
         <Filter value={filter} onChange={handleFilter} />
-        <ContactList contacts={visibleContacts} deleteContact={deleteContact} />
+        <ContactList
+          contacts={visibleContacts}
+          deleteContact={handleDeleteContact}
+        />
       </div>
     </ContainerApp>
   );
